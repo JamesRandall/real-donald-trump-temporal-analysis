@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Posting rhythm — year × hour</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1814;
+    --ink-soft: #5a5346;
+    --ink-faint: #a39885;
+    --paper: #f4efe6;
+    --paper-warm: #ebe4d4;
+    --rule: #c9bea8;
+    --accent: #8b2c1a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
+  body {
+    font-family: "Fraunces", Georgia, serif;
+    font-variant-numeric: tabular-nums;
+    padding: 3rem 4rem 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  header { border-bottom: 1px solid var(--rule); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+  .eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.5rem;
+  }
+  h1 {
+    font-family: "Fraunces", serif;
+    font-weight: 700;
+    font-size: 2.8rem;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.4rem;
+    font-variation-settings: "opsz" 144;
+  }
+  .dek {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin: 0;
+    font-style: italic;
+  }
+  .controls {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+  }
+  .controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  input[type="file"] {
+    font-family: inherit;
+    font-size: 0.78rem;
+  }
+  select, button {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.7rem;
+    background: var(--paper-warm);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button:hover { background: var(--ink); color: var(--paper); }
+  .info-btn {
+    width: 1.5em;
+    height: 1.5em;
+    padding: 0;
+    border-radius: 50%;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.3rem;
+    color: var(--ink-soft);
+  }
+  .info-btn[aria-expanded="true"] { background: var(--ink); color: var(--paper); }
+  .info-panel {
+    font-family: "Fraunces", serif;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    background: var(--paper-warm);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.2rem;
+    margin: -1rem 0 1.5rem;
+    max-width: 68ch;
+  }
+  .info-panel h4 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0 0 0.5rem;
+    color: var(--ink);
+  }
+  .info-panel p { margin: 0 0 0.65rem; }
+  .info-panel p:last-child { margin-bottom: 0; }
+  .info-panel strong { color: var(--ink); font-weight: 600; }
+  .year-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+  }
+  .year-chips-label {
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-right: 0.5rem;
+  }
+  .year-chip {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--rule);
+    background: var(--paper-warm);
+    color: var(--ink);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+  }
+  .year-chip:hover { border-color: var(--ink); background: var(--paper-warm); color: var(--ink); }
+  .year-chip.excluded {
+    background: transparent;
+    color: var(--ink-faint);
+    text-decoration: line-through;
+  }
+  .years-reset {
+    margin-left: 0.5rem;
+    padding: 0.2rem 0.55rem;
+    background: transparent;
+    border: none;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    font-family: inherit;
+    font-size: inherit;
+  }
+  .years-reset:hover { background: transparent; color: var(--ink); }
+  #empty {
+    padding: 3rem;
+    text-align: center;
+    color: var(--ink-soft);
+    border: 1px dashed var(--rule);
+    font-style: italic;
+  }
+  .chart-wrap { position: relative; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .cell { stroke: var(--paper); stroke-width: 1; cursor: crosshair; }
+  .cell:hover { stroke: var(--ink); stroke-width: 1.5; }
+  .axis text {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    fill: var(--ink-soft);
+  }
+  .axis-title {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    fill: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+  .band-label {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 11px;
+    fill: var(--ink-faint);
+  }
+  .legend-tick {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    fill: var(--ink-soft);
+  }
+  #tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.6rem 0.8rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    opacity: 0;
+    transition: opacity 0.12s;
+    white-space: nowrap;
+    z-index: 10;
+  }
+  #tooltip strong {
+    color: var(--paper);
+    font-weight: 500;
+  }
+  #tooltip .val {
+    color: #f0c060;
+    font-weight: 500;
+  }
+  footer {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+<header>
+  <p class="eyebrow">Posting rhythm · Truth Social</p>
+  <h1>Year by hour of day</h1>
+  <p class="dek">Each cell shows how concentrated posting was in that hour of the day, relative to that year's total output. Read down a column to see one year's daily rhythm; read across a row to see how that hour's share has shifted over time.</p>
+</header>
+
+<div class="controls">
+  <label>Data <input type="file" id="file" accept=".csv,.json"></label>
+  <label>Scale
+    <select id="scale">
+      <option value="year">Per-year max</option>
+      <option value="global">Global max</option>
+    </select>
+  </label>
+  <button class="info-btn" type="button" aria-expanded="false" aria-controls="scale-help" title="What do these mean?">?</button>
+  <label>Palette
+    <select id="palette">
+      <option value="ember">Ember</option>
+      <option value="ink">Ink</option>
+      <option value="moss">Moss</option>
+    </select>
+  </label>
+  <button id="sample">Load sample</button>
+</div>
+
+<div class="info-panel" id="scale-help" hidden>
+  <h4>Scale mode</h4>
+  <p><strong>Per-year max</strong> normalises colour within each column. Every year's darkest cell hits the top of the palette, so each year shows its daily rhythm at full contrast — even a year with very few posts.</p>
+  <p><strong>Global max</strong> uses one shared scale anchored at the largest percentage anywhere in the <em>visible</em> matrix. A year with a sharp peak draws darker than one whose posts are spread evenly — concentration becomes the signal.</p>
+  <p>Cell values themselves don't change: every cell is already a percentage of that year's posts. Excluding a year via the chips below removes it from the chart and from the global-max calculation.</p>
+</div>
+
+<div class="year-chips" id="year-chips" hidden>
+  <span class="year-chips-label">Years</span>
+  <span id="year-chip-list"></span>
+  <button class="years-reset" type="button" id="years-reset">reset</button>
+</div>
+
+<div id="empty">Drop a CSV (output of <code>analyse-hours.ts --normalise</code>) or click "Load sample".</div>
+<div class="chart-wrap" id="chart-wrap" style="display:none">
+  <svg id="chart"></svg>
+  <div id="tooltip"></div>
+</div>
+
+<footer>
+  <span>Hour of day · Eastern</span>
+  <span>Source: Truth Social public statuses API</span>
+</footer>
+
+<script>
+const PALETTES = {
+  ember: { stops: ["#f4efe6", "#f0d5a8", "#e89968", "#c95a2e", "#7a1d0d"], label: "Ember" },
+  ink:   { stops: ["#f4efe6", "#c9bea8", "#7a6f5c", "#3a342a", "#1a1814"], label: "Ink" },
+  moss:  { stops: ["#f4efe6", "#c8d4ad", "#7a9258", "#3d5a2a", "#1a2a10"], label: "Moss" },
+};
+
+const HOUR_LABEL = (h) => {
+  const ampm = h < 12 ? "am" : "pm";
+  const hh = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hh}${ampm}`;
+};
+
+const lerpColor = (a, b, t) => {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const ar = (pa >> 16) & 255, ag = (pa >> 8) & 255, ab = pa & 255;
+  const br = (pb >> 16) & 255, bg = (pb >> 8) & 255, bb = pb & 255;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const bl = Math.round(ab + (bb - ab) * t);
+  return `rgb(${r},${g},${bl})`;
+};
+
+const rampColor = (t, paletteName) => {
+  const stops = PALETTES[paletteName].stops;
+  if (t <= 0) return stops[0];
+  if (t >= 1) return stops[stops.length - 1];
+  const seg = t * (stops.length - 1);
+  const i = Math.floor(seg);
+  return lerpColor(stops[i], stops[i + 1], seg - i);
+};
+
+let DATA = null; // { years: number[], hours: 0..23, matrix: hour -> year -> value }
+const EXCLUDED = new Set();
+
+const parseCSV = (text) => {
+  const lines = text.trim().split(/\r?\n/);
+  const header = lines[0].split(",");
+  const years = header.slice(1).map(Number);
+  const matrix = []; // matrix[h][yearIdx]
+  for (const row of lines.slice(1)) {
+    const cells = row.split(",");
+    matrix[Number(cells[0])] = cells.slice(1).map(Number);
+  }
+  return { years, matrix };
+};
+
+const render = () => {
+  if (!DATA) return;
+
+  // Apply year exclusions before anything else — they affect column count,
+  // layout, and the global-max calculation.
+  const visibleIdx = [];
+  const years = [];
+  for (let i = 0; i < DATA.years.length; i++) {
+    if (!EXCLUDED.has(DATA.years[i])) { visibleIdx.push(i); years.push(DATA.years[i]); }
+  }
+  if (years.length === 0) {
+    const empty = document.getElementById("empty");
+    empty.style.display = "block";
+    empty.textContent = "All years excluded — toggle some back on above.";
+    document.getElementById("chart-wrap").style.display = "none";
+    return;
+  }
+  const matrix = DATA.matrix.map((row) => visibleIdx.map((i) => row[i] || 0));
+
+  document.getElementById("empty").style.display = "none";
+  document.getElementById("chart-wrap").style.display = "block";
+
+  const scaleMode = document.getElementById("scale").value;
+  const paletteName = document.getElementById("palette").value;
+
+  // Compute scale.
+  let globalMax = 0;
+  const yearMax = years.map((_, yi) => {
+    let m = 0;
+    for (let h = 0; h < 24; h++) m = Math.max(m, matrix[h][yi] || 0);
+    return m;
+  });
+  globalMax = Math.max(...yearMax);
+
+  const tFor = (val, yi) => {
+    if (scaleMode === "global") return globalMax === 0 ? 0 : val / globalMax;
+    return yearMax[yi] === 0 ? 0 : val / yearMax[yi];
+  };
+
+  // Layout.
+  const margin = { top: 50, right: 90, bottom: 30, left: 70 };
+  const cellW = Math.max(28, Math.min(56, 900 / years.length));
+  const cellH = 22;
+  const width = margin.left + cellW * years.length + margin.right;
+  const height = margin.top + cellH * 24 + margin.bottom;
+
+  const svg = document.getElementById("chart");
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.innerHTML = "";
+
+  const ns = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, text = null) => {
+    const e = document.createElementNS(ns, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    if (text !== null) e.textContent = text;
+    return e;
+  };
+
+  // Time-of-day bands (subtle background shading).
+  const bands = [
+    { from: 0, to: 5, label: "small hours" },
+    { from: 5, to: 12, label: "morning" },
+    { from: 12, to: 17, label: "afternoon" },
+    { from: 17, to: 22, label: "evening" },
+    { from: 22, to: 24, label: "late" },
+  ];
+  for (const b of bands) {
+    const y = margin.top + b.from * cellH;
+    const h = (b.to - b.from) * cellH;
+    svg.appendChild(el("text", {
+      x: margin.left + cellW * years.length + 12,
+      y: y + h / 2 + 3,
+      class: "band-label",
+    }, b.label));
+  }
+
+  // Year labels (x-axis, top).
+  years.forEach((y, i) => {
+    const x = margin.left + i * cellW + cellW / 2;
+    svg.appendChild(el("text", {
+      x, y: margin.top - 12,
+      "text-anchor": "middle",
+      class: "axis",
+    }, String(y)));
+  });
+  svg.appendChild(el("text", {
+    x: margin.left + (cellW * years.length) / 2,
+    y: 18,
+    "text-anchor": "middle",
+    class: "axis-title",
+  }, "Year"));
+
+  // Hour labels (y-axis, left). Every 3 hours for clarity.
+  for (let h = 0; h < 24; h++) {
+    if (h % 3 !== 0) continue;
+    svg.appendChild(el("text", {
+      x: margin.left - 10,
+      y: margin.top + h * cellH + cellH / 2 + 4,
+      "text-anchor": "end",
+      class: "axis",
+    }, HOUR_LABEL(h)));
+  }
+  svg.appendChild(el("text", {
+    x: 18,
+    y: margin.top + 12 * cellH,
+    transform: `rotate(-90 18 ${margin.top + 12 * cellH})`,
+    "text-anchor": "middle",
+    class: "axis-title",
+  }, "Hour of day"));
+
+  // Cells.
+  const tooltip = document.getElementById("tooltip");
+  const wrap = document.getElementById("chart-wrap");
+  for (let h = 0; h < 24; h++) {
+    for (let yi = 0; yi < years.length; yi++) {
+      const v = matrix[h][yi] || 0;
+      const t = tFor(v, yi);
+      const rect = el("rect", {
+        x: margin.left + yi * cellW,
+        y: margin.top + h * cellH,
+        width: cellW,
+        height: cellH,
+        fill: rampColor(t, paletteName),
+        class: "cell",
+      });
+      rect.addEventListener("mousemove", (ev) => {
+        tooltip.innerHTML =
+          `<strong>${years[yi]} · ${HOUR_LABEL(h)}</strong><br>` +
+          `<span class="val">${v.toFixed(2)}%</span> of year's posts`;
+        const rect = wrap.getBoundingClientRect();
+        tooltip.style.left = (ev.clientX - rect.left + 12) + "px";
+        tooltip.style.top = (ev.clientY - rect.top + 12) + "px";
+        tooltip.style.opacity = "1";
+      });
+      rect.addEventListener("mouseleave", () => { tooltip.style.opacity = "0"; });
+      svg.appendChild(rect);
+    }
+  }
+
+  // Legend.
+  const legendW = 200, legendH = 10;
+  const legendX = margin.left;
+  const legendY = height - 12;
+  const gradId = "grad-" + paletteName;
+  const defs = el("defs");
+  const grad = el("linearGradient", { id: gradId, x1: "0%", x2: "100%", y1: "0%", y2: "0%" });
+  PALETTES[paletteName].stops.forEach((c, i) => {
+    grad.appendChild(el("stop", {
+      offset: (i / (PALETTES[paletteName].stops.length - 1) * 100) + "%",
+      "stop-color": c,
+    }));
+  });
+  defs.appendChild(grad);
+  svg.appendChild(defs);
+  svg.appendChild(el("rect", {
+    x: legendX, y: legendY - legendH,
+    width: legendW, height: legendH,
+    fill: `url(#${gradId})`,
+    stroke: "var(--rule)",
+  }));
+  svg.appendChild(el("text", {
+    x: legendX, y: legendY + 12,
+    class: "legend-tick",
+  }, "less"));
+  svg.appendChild(el("text", {
+    x: legendX + legendW, y: legendY + 12,
+    "text-anchor": "end",
+    class: "legend-tick",
+  }, "more"));
+  svg.appendChild(el("text", {
+    x: legendX + legendW / 2, y: legendY + 12,
+    "text-anchor": "middle",
+    class: "legend-tick",
+  }, scaleMode === "global" ? "shared scale" : "per-year scale"));
+};
+
+// --- Help popover ---
+const closeAllPanels = () => {
+  document.querySelectorAll(".info-btn").forEach((b) => b.setAttribute("aria-expanded", "false"));
+  document.querySelectorAll(".info-panel").forEach((p) => { p.hidden = true; });
+};
+document.querySelectorAll(".info-btn").forEach((btn) => {
+  btn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    const panel = document.getElementById(btn.getAttribute("aria-controls"));
+    const wasOpen = btn.getAttribute("aria-expanded") === "true";
+    closeAllPanels();
+    if (!wasOpen) { btn.setAttribute("aria-expanded", "true"); panel.hidden = false; }
+  });
+});
+document.addEventListener("click", (ev) => {
+  if (!ev.target.closest(".info-panel") && !ev.target.closest(".info-btn")) closeAllPanels();
+});
+document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") closeAllPanels(); });
+
+// --- Year chips ---
+const renderYearChips = () => {
+  const chips = document.getElementById("year-chips");
+  const list = document.getElementById("year-chip-list");
+  if (!DATA) { chips.hidden = true; return; }
+  list.innerHTML = "";
+  for (const y of DATA.years) {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "year-chip" + (EXCLUDED.has(y) ? " excluded" : "");
+    chip.textContent = String(y);
+    chip.addEventListener("click", () => {
+      if (EXCLUDED.has(y)) EXCLUDED.delete(y); else EXCLUDED.add(y);
+      renderYearChips();
+      render();
+    });
+    list.appendChild(chip);
+  }
+  chips.hidden = false;
+};
+document.getElementById("years-reset").addEventListener("click", () => {
+  if (EXCLUDED.size === 0) return;
+  EXCLUDED.clear();
+  renderYearChips();
+  render();
+});
+
+const onDataLoaded = () => {
+  EXCLUDED.clear();
+  renderYearChips();
+  render();
+};
+
+document.getElementById("file").addEventListener("change", async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const text = await f.text();
+  if (f.name.endsWith(".json")) {
+    const j = JSON.parse(text);
+    const years = j.years;
+    const matrix = Array.from({ length: 24 }, (_, h) => {
+      const row = j.byHour.find((r) => r.hour === h);
+      return years.map((y) => row.values[y] || 0);
+    });
+    DATA = { years, matrix };
+  } else {
+    DATA = parseCSV(text);
+  }
+  onDataLoaded();
+});
+
+document.getElementById("scale").addEventListener("change", render);
+document.getElementById("palette").addEventListener("change", render);
+
+// Sample data — plausible shape, not real.
+document.getElementById("sample").addEventListener("click", () => {
+  const years = [2022, 2023, 2024, 2025, 2026];
+  const matrix = [];
+  for (let h = 0; h < 24; h++) {
+    matrix[h] = years.map((y, yi) => {
+      // synthesise: gaussian-ish bumps morning + evening, drifting earlier over time
+      const morningPeak = 8 - yi * 0.4;
+      const eveningPeak = 21 - yi * 0.3;
+      const m = Math.exp(-Math.pow(h - morningPeak, 2) / 8) * 6;
+      const e = Math.exp(-Math.pow(h - eveningPeak, 2) / 6) * (4 + yi * 0.5);
+      const lateNight = h >= 2 && h <= 5 ? (yi >= 2 ? 1.2 : 0.4) : 0;
+      return +(m + e + lateNight + Math.random() * 0.3).toFixed(2);
+    });
+  }
+  // Normalise each year column to sum ~100.
+  for (let yi = 0; yi < years.length; yi++) {
+    let sum = 0;
+    for (let h = 0; h < 24; h++) sum += matrix[h][yi];
+    for (let h = 0; h < 24; h++) matrix[h][yi] = +(matrix[h][yi] / sum * 100).toFixed(2);
+  }
+  DATA = { years, matrix };
+  onDataLoaded();
+});
+</script>
+</body>
+</html>
