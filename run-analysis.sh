@@ -6,19 +6,23 @@ set -euo pipefail
 # output files are overwritten.
 #
 # Flags:
-#   --static    Also generate self-contained *.static.html bundles with the
-#               CSVs inlined (no file picker) and open those instead.
-#   --hershey   Use the Hershey CompleteTrumpTweetsArchive CSVs as the Twitter
-#               source instead of the default trumparchive v2 JSON.
+#   --static          Also generate self-contained *.static.html bundles with
+#                     the CSVs inlined (no file picker) and open those instead.
+#   --hershey         Use the Hershey CompleteTrumpTweetsArchive CSVs as the
+#                     Twitter source instead of the default trumparchive v2 JSON.
+#   --web-component   Generate web-component bundles in dist/ for embedding in
+#                     a Hugo blog or any other site (open dist/index.html demo).
 
 cd "$(dirname "$0")"
 
 STATIC=
 HERSHEY=
+WEB_COMPONENT=
 for arg in "$@"; do
   case "$arg" in
-    --static)  STATIC=1 ;;
-    --hershey) HERSHEY=1 ;;
+    --static)         STATIC=1 ;;
+    --hershey)        HERSHEY=1 ;;
+    --web-component)  WEB_COMPONENT=1 ;;
     *) echo "Unknown arg: $arg" >&2; exit 2 ;;
   esac
 done
@@ -91,8 +95,21 @@ if [[ -n "$STATIC" ]]; then
   npx tsx bundle-static.ts --template "$MONTH_HTML" --csv "$MONTH_HOUR_CSV" --out "$MONTH_STATIC"
 fi
 
+if [[ -n "$WEB_COMPONENT" ]]; then
+  echo
+  echo "==> Bundling web components into dist/"
+  npx tsx bundle-web-components.ts
+fi
+
 echo
-if [[ -n "$STATIC" ]]; then
+if [[ -n "$WEB_COMPONENT" ]]; then
+  echo "==> Opening dist/index.html (web-component demo)"
+  if command -v open >/dev/null 2>&1; then
+    open dist/index.html
+  else
+    echo "Open dist/index.html in a browser to preview the components."
+  fi
+elif [[ -n "$STATIC" ]]; then
   echo "==> Opening static viewers (data inlined)"
   if command -v open >/dev/null 2>&1; then
     open "$YEAR_STATIC"

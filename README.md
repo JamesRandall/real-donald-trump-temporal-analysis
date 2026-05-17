@@ -80,12 +80,15 @@ Once `./data/` has the two files above:
 ./run-analysis.sh                     # opens the dynamic viewers — you drop the CSVs in
 ./run-analysis.sh --static            # also writes plot-*.static.html with the CSVs inlined; opens those instead
 ./run-analysis.sh --hershey           # use the Hershey CSVs instead of the trumparchive v2 JSON as the Twitter source
+./run-analysis.sh --web-component     # build self-contained custom elements in dist/ for embedding in a Hugo blog
 ./run-analysis.sh --hershey --static  # flags compose
 ```
 
 This merges the sources into `unified.ndjson`, runs all three analysers, writes `posts-by-year-hour.csv` + `posts-by-dow-hour.csv` + `posts-by-month-hour.csv`, and opens the viewers. With `--static` it additionally produces `plot-heatmap.static.html`, `plot-dow-heatmap.static.html`, and `plot-month-heatmap.static.html` — each one a single self-contained file with the corresponding CSV embedded, ready to share or commit.
 
 `--hershey` swaps the Twitter source from `data/trump_tweets_v2_archive.json` to `data/realDonaldTrump_bf_office.csv` + `data/realDonaldTrump_in_office.csv`. The Truth Social file is unchanged. Useful for a sanity check (the two sources should agree on the overall posting-hour shape) or if you can't get the v2 JSON. The Hershey CSVs lack reblog markers, so reblog-filtering is a no-op on that path.
+
+`--web-component` writes three custom-element JS bundles into `dist/` (`trump-heatmap-year.js`, `trump-heatmap-dow.js`, `trump-heatmap-month.js`) with the matching CSVs inlined. Drop them into a Hugo site's `static/` folder, `<script>` them, and use `<trump-heatmap-year></trump-heatmap-year>` (and the other two) anywhere on the page. Shadow DOM keeps each instance's styles isolated. The source templates live in `web-components/`; `dist/README.md` has the Hugo integration recipe (including a one-line shortcode).
 
 To work step by step instead:
 
@@ -278,7 +281,16 @@ All three support a `?` button next to the scale dropdown that explains per-colu
 ├── plot-dow-heatmap.html    # weekday × hour viewer (file picker)
 ├── plot-month-heatmap.html  # month × hour viewer (date range default: 24mo)
 ├── bundle-static.ts         # inlines a CSV into a viewer template
-├── plot-*.static.html       # self-contained bundles (run-analysis.sh --static)
+├── plot-*.static.html       # self-contained HTML bundles (run-analysis.sh --static)
+├── bundle-web-components.ts # inlines CSVs into web-component templates
+├── web-components/          # source for the custom elements
+│   ├── trump-heatmap-year.js
+│   ├── trump-heatmap-dow.js
+│   └── trump-heatmap-month.js
+├── dist/                    # bundled custom elements + demo (run-analysis.sh --web-component)
+│   ├── trump-heatmap-*.js
+│   ├── index.html
+│   └── README.md
 ├── data/                    # source files (gitignore)
 │   ├── trump_tweets_v2_archive.json
 │   └── truth_archive.json
